@@ -14,8 +14,6 @@ use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
-use Filament\Widgets\AccountWidget;
-use Filament\Widgets\FilamentInfoWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
@@ -35,7 +33,7 @@ class AdminPanelProvider extends PanelProvider
             ->login()
             ->globalSearch(false)
             ->sidebarWidth('xs')
-            // 2. Replace the search bar area with the user's name
+            ->homeUrl(fn() => route('filament.admin.pages.dashboard'))
             ->renderHook(
                 'panels::global-search.before',
                 fn(): string => '
@@ -55,8 +53,6 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([
-                AccountWidget::class,
-                FilamentInfoWidget::class,
                 LowStockAlert::class,
                 TopProducts::class,
                 RecentMovements::class
