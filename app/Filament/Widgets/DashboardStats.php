@@ -6,11 +6,28 @@ use App\Models\Product;
 use App\Models\Warehouse;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
+use Illuminate\Support\Facades\Cache;
 
 class DashboardStats extends StatsOverviewWidget
 {
     protected function getStats(): array
     {
+        $stats = Cache::remember('dashboard_stats', 300, function () {
+            $products = Product::with('warehouses')->get();
+            $totalStockValue = 0;
+            $totalUnits = 0;
+            foreach ($products as $product) {
+                $stock = $product->current_stock;
+                $totalUnits += $stock;
+                $totalStockValue += $stock * $product->price;
+            }
+            return [
+                'total_products' => Product::count(),
+                'total_warehouses' => Warehouse::count(),
+                'total_stock_value' => $totalStockValue,
+                'total_units' => $totalUnits,
+            ];
+        });
         // Calculate total stock value
         $products = Product::all();
         $totalStockValue = 0;
