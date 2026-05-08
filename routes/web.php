@@ -2,4 +2,6 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', '/admin');
+Route::get('/', function () {
+    return redirect('/admin');
+});
