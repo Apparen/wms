@@ -15,6 +15,8 @@ class RecentMovements extends BaseWidget
     {
         return $table
             ->query(StockMovement::query()->with(['product', 'warehouse', 'creator'])->latest()->limit(10))
+            ->paginated(false)
+            ->defaultSort('created_at', 'desc')
             ->columns([
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Date')
