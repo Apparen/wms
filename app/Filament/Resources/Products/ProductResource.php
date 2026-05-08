@@ -92,8 +92,10 @@ class ProductResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            // ->recordAction(null)
-            ->recordUrl(null) // Disable default row click action
+            ->query(Product::query()->with(['warehouses' => function ($query) {
+                $query->select('warehouses.id', 'warehouses.name');
+            }]))
+            ->recordUrl(null)
             ->columns([
                 TextColumn::make('sku')
                     ->searchable()
@@ -141,6 +143,9 @@ class ProductResource extends Resource
                     ->numeric()
                     ->sortable(),
             ])
+            ->defaultSort('id', 'desc')
+            ->paginated([10, 25, 50, 100])
+            ->defaultPaginationPageOption(25)
             ->filters([
                 FiltersSelectFilter::make('stock_status')
                     ->label('Stock Status')

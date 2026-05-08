@@ -7,6 +7,7 @@ use App\Models\Warehouse;
 use App\Models\StockMovement;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class StockService
 {
@@ -82,6 +83,7 @@ class StockService
                         'current_stock' => $newStock,
                         'updated_at' => now(),
                     ]);
+                Cache::forget("product_stock_{$productId}");
             } else {
                 // Product not in this warehouse yet - attach it
                 DB::table('product_warehouse')->insert([

@@ -6,6 +6,7 @@ use App\Services\StockService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class Product extends Model
@@ -27,42 +28,6 @@ class Product extends Model
         'cost' => 'decimal:2',
         'min_stock_level' => 'integer',
     ];
-    // public function getCurrentStockAttribute(): int
-    // {
-    //     return (int) DB::table('product_warehouse')
-    //         ->where('product_id', $this->id)
-    //         ->sum('current_stock');
-    // }
-
-    // // 🔥 Calculate stock per warehouse
-    // public function getStockPerWarehouseAttribute(): array
-    // {
-    //     return DB::table('product_warehouse')
-    //         ->join('warehouses', 'product_warehouse.warehouse_id', '=', 'warehouses.id')
-    //         ->where('product_warehouse.product_id', $this->id)
-    //         ->select('warehouses.name', 'product_warehouse.current_stock')
-    //         ->get()
-    //         ->toArray();
-    // }
-
-    // // 🔥 Automatic stock status based on actual current stock
-    // public function getStockStatusAttribute(): string
-    // {
-    //     $stock = $this->current_stock;  // Uses the accessor above
-    //     if ($stock <= 0) return 'Out of Stock';
-    //     if ($stock <= $this->min_stock_level) return 'Low Stock';
-    //     return 'In Stock';
-    // }
-
-    // // 🔥 Color for badge
-    // public function getStockStatusColorAttribute(): string
-    // {
-    //     return match ($this->stock_status) {
-    //         'Out of Stock' => 'danger',
-    //         'Low Stock' => 'warning',
-    //         'In Stock' => 'success',
-    //     };
-    // }
     public function warehouses(): BelongsToMany
     {
         return $this->belongsToMany(Warehouse::class)
@@ -80,7 +45,10 @@ class Product extends Model
      */
     public function getCurrentStockAttribute(): int
     {
-        return StockService::getTotalStock($this->id);
+        $cacheKey = "product_stock_{$this->id}";
+        return Cache::remember($cacheKey, 60, function () {
+            return (int) DB::table('product_warehouse')->where('product_id', $this->id)->sum('current_stock');
+        });
     }
 
     /**
@@ -114,6 +82,9 @@ class Product extends Model
                     ->selectRaw('COALESCE(SUM(current_stock), 0)')
                     ->limit(1)
             ]);
+        });
+        static::updated(function ($product) {
+            Cache::forget("product_stock_{$product->id}");
         });
     }
     /**
